@@ -1,35 +1,74 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '@/components/ProductCard';
-import { MOCK_PRODUCTS as INITIAL_PRODUCTS } from '@/lib/mockData';
+import { apiFetch } from '@/lib/api';
 
 type ProductContextType = {
     products: Product[];
-    addProduct: (product: Omit<Product, 'id'>) => void;
-    editProduct: (id: string, updatedProduct: Omit<Product, 'id'>) => void;
+    loading: boolean;
+    refreshProducts: () => Promise<void>;
+    addProduct: (formData: FormData) => Promise<void>;
+    editProduct: (id: number, formData: FormData) => Promise<void>;
+    deleteProduct: (id: number) => Promise<void>;
 };
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
-    const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const addProduct = (newProduct: Omit<Product, 'id'>) => {
-        const product: Product = {
-            ...newProduct,
-            id: `p${Date.now()}` // Generate temporary ID
-        };
-        // Add to beginning of array so it shows up first
-        setProducts(prev => [product, ...prev]);
+    const refreshProducts = async () => {
+        setLoading(true);
+        try {
+            const data = await apiFetch<Product[]>('/products');
+            setProducts(data);
+        } catch (error) {
+            console.error('Failed to fetch products:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const editProduct = (id: string, updatedProduct: Omit<Product, 'id'>) => {
-        setProducts(prev => prev.map(p => p.id === id ? { ...updatedProduct, id } : p));
+    const addProduct = async (formData: FormData) => {
+        await apiFetch('/products', {
+            method: 'POST',
+            body: formData,
+        });
+        await refreshProducts(); // Refresh state entirely
     };
+
+    const editProduct = async (id: number, formData: FormData) => {
+        await apiFetch(`/products/${id}`, {
+            method: 'PUT',
+            body: formData,
+        });
+        await refreshProducts();
+    };
+
+    const deleteProduct = async (id: number) => {
+        await apiFetch(`/products/${id}`, {
+            method: 'DELETE',
+        });
+        await refreshProducts();
+    };
+
+    useEffect(() => {
+        refreshProducts();
+    }, []);
 
     return (
-        <ProductContext.Provider value={{ products, addProduct, editProduct }}>
+        <ProductContext.Provider
+            value={{
+                products,
+                loading,
+                refreshProducts,
+                addProduct,
+                editProduct,
+                deleteProduct,
+            }}
+        >
             {children}
         </ProductContext.Provider>
     );

@@ -1,24 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProductCard from '@/components/ProductCard';
-import { MOCK_PRODUCTS } from '@/lib/mockData';
 import { Search, Filter } from 'lucide-react';
 import { useProducts } from '@/context/ProductContext';
-import React from 'react';
+import { apiFetch } from '@/lib/api';
 
 export default function MarketplacePage() {
-    const { products } = useProducts();
+    const { products, loading } = useProducts();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('Todos');
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 
-    const categories = ['Todos', 'Diseño', 'Desarrollo Web', 'Soporte', 'Repostería', 'Fotografía'];
+    useEffect(() => {
+        apiFetch<{ id: number; name: string }[]>('/categories')
+            .then(data => setCategories(data))
+            .catch(console.error);
+    }, []);
 
     // Filter logic
     const filteredProducts = products.filter(product => {
-        const matchesCategory = activeCategory === 'Todos' || product.category === activeCategory;
+        const matchesCategory = activeCategory === 'Todos' || product.category?.name === activeCategory;
         const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.seller.name.toLowerCase().includes(searchQuery.toLowerCase());
+            (product.seller?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
     });
 
@@ -53,23 +57,36 @@ export default function MarketplacePage() {
 
             {/* Categories shortcut mapping */}
             <div className="flex gap-3 overflow-x-auto pb-6 mb-4 scrollbar-hide">
+                <button
+                    onClick={() => setActiveCategory('Todos')}
+                    className={`whitespace-nowrap px-5 py-2 rounded-full font-medium transition-colors ${activeCategory === 'Todos'
+                        ? 'bg-primary text-white shadow-md shadow-primary/20'
+                        : 'bg-primary/5 border border-primary/10 hover:bg-primary/10'
+                        }`}
+                >
+                    Todos
+                </button>
                 {categories.map((cat) => (
                     <button
-                        key={cat}
-                        onClick={() => setActiveCategory(cat)}
-                        className={`whitespace-nowrap px-5 py-2 rounded-full font-medium transition-colors ${activeCategory === cat
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.name)}
+                        className={`whitespace-nowrap px-5 py-2 rounded-full font-medium transition-colors ${activeCategory === cat.name
                             ? 'bg-primary text-white shadow-md shadow-primary/20'
                             : 'bg-primary/5 border border-primary/10 hover:bg-primary/10'
                             }`}
                     >
-                        {cat}
+                        {cat.name}
                     </button>
                 ))}
             </div>
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.length > 0 ? (
+                {loading ? (
+                    <div className="col-span-full py-20 text-center opacity-50 text-lg">
+                        Cargando productos...
+                    </div>
+                ) : filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))

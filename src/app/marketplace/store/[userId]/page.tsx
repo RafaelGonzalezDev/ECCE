@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { notFound } from 'next/navigation';
-import { getUserById } from '@/lib/mockData';
 import ProductCard from '@/components/ProductCard';
 import { User, MapPin, Calendar, Star, MessageSquare } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
@@ -11,15 +10,18 @@ import React from 'react';
 
 export default function StorePage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = React.use(params);
+    const numericUserId = parseInt(userId, 10);
     const { openChat } = useChat();
-    const { products } = useProducts();
+    const { products, loading } = useProducts();
     const [activeTab, setActiveTab] = useState<'catalogo' | 'resenas' | 'politicas'>('catalogo');
 
-    const seller = getUserById(userId);
-    const storeProducts = products.filter(p => p.seller.id === userId);
+    const storeProducts = products.filter(p => p.seller.id === numericUserId);
+    
+    // Si la lista de productos cargó pero no hay productos, mostramos un fallback básico, de caso contrario extraemos el nombre del vendedor del primer producto.
+    const sellerBasicInfo = storeProducts.length > 0 ? storeProducts[0].seller : { id: numericUserId, name: 'Emprendedor', businessName: 'Tienda', avatarUrl: undefined as string | undefined, municipio: undefined as string | undefined, departamento: undefined as string | undefined, createdAt: undefined as string | undefined };
 
-    if (!seller) {
-        notFound();
+    if (loading) {
+        return <div className="max-w-7xl mx-auto px-4 py-20 text-center opacity-60">Cargando perfil de tienda...</div>;
     }
 
     const mockReviews = [
@@ -35,34 +37,42 @@ export default function StorePage({ params }: { params: Promise<{ userId: string
                 <div className="h-48 md:h-64 bg-gradient-to-r from-primary/30 via-purple-500/30 to-primary/10" />
 
                 <div className="px-6 md:px-12 pb-8 flex flex-col md:flex-row gap-6 items-center md:items-end -mt-16 md:-mt-24 relative z-10">
-                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-white dark:bg-black p-2 shadow-xl border border-primary/20">
-                        <div className="w-full h-full rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white">
-                            <User size={64} className="opacity-80" />
-                        </div>
+                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-white dark:bg-black p-1 shadow-xl border border-primary/20 overflow-hidden">
+                        {sellerBasicInfo.avatarUrl ? (
+                            <img src={sellerBasicInfo.avatarUrl} alt={sellerBasicInfo.businessName || sellerBasicInfo.name} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                            <div className="w-full h-full rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white">
+                                <User size={64} className="opacity-80" />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex-1 text-center md:text-left pt-4 md:pt-0">
-                        <h1 className="text-3xl md:text-5xl font-extrabold mb-2">{seller.storeName}</h1>
+                        <h1 className="text-3xl md:text-5xl font-extrabold mb-2">{sellerBasicInfo.businessName || sellerBasicInfo.name}</h1>
                         <p className="text-lg opacity-70 font-medium mb-4 flex items-center justify-center md:justify-start gap-2">
-                            Propietario: {seller.name}
+                            Tienda de Emprendedor
                         </p>
 
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium opacity-80">
                             <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
-                                <Star size={16} className="fill-current" /> {seller.rating} / 5.0
+                                <Star size={16} className="fill-current" /> 4.8 / 5.0
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-black/5 dark:bg-white/5 rounded-full">
-                                <MapPin size={16} /> Ciudad Base
-                            </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-black/5 dark:bg-white/5 rounded-full">
-                                <Calendar size={16} /> Unido desde {seller.joined}
-                            </div>
+                            {sellerBasicInfo.municipio && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-black/5 dark:bg-white/5 rounded-full">
+                                    <MapPin size={16} /> {sellerBasicInfo.municipio}, {sellerBasicInfo.departamento}
+                                </div>
+                            )}
+                            {sellerBasicInfo.createdAt && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-black/5 dark:bg-white/5 rounded-full">
+                                    <Calendar size={16} /> Registrado {new Date(sellerBasicInfo.createdAt).toLocaleDateString('es-HN')}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="flex w-full md:w-auto mt-4 md:mt-0">
                         <button
-                            onClick={() => openChat(seller.id)}
+                            onClick={() => openChat(sellerBasicInfo.id.toString())}
                             className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/30 flex items-center justify-center gap-2 hover:-translate-y-1 transition-transform"
                         >
                             <MessageSquare size={20} />
@@ -112,11 +122,11 @@ export default function StorePage({ params }: { params: Promise<{ userId: string
             {activeTab === 'resenas' && (
                 <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
                     <div className="flex items-center gap-4 mb-8">
-                        <div className="text-6xl font-black text-primary">{seller.rating}</div>
+                        <div className="text-6xl font-black text-primary">4.8</div>
                         <div>
                             <div className="flex gap-1 text-primary mb-1">
                                 {[1, 2, 3, 4, 5].map(star => (
-                                    <Star key={star} size={20} className={star <= Math.floor(seller.rating) ? 'fill-current' : 'opacity-30'} />
+                                    <Star key={star} size={20} className={star <= Math.floor(4.8) ? 'fill-current' : 'opacity-30'} />
                                 ))}
                             </div>
                             <p className="opacity-70 text-sm">Basado en {mockReviews.length} valoraciones</p>

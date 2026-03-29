@@ -124,13 +124,6 @@ export default function LoginPage() {
                             </button>
                         </Field>
 
-                        {/* Hint for demo */}
-                        <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-xs space-y-1">
-                            <p className="font-semibold opacity-70">Credenciales de demostración:</p>
-                            <p className="opacity-60">📧 maria@ecce.app — 🔑 password123</p>
-                            <p className="opacity-60">📧 juan@ecce.app — 🔑 password123</p>
-                        </div>
-
                         <button
                             type="submit"
                             disabled={isLoading}
