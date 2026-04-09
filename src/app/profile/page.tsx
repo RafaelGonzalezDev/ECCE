@@ -4,13 +4,73 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     User, Mail, Phone, Shield, Bell, Key, LogOut, Edit3, Save, X,
-    Church, Briefcase, CheckCircle, Store, MapPin
+    Church, Briefcase, CheckCircle, Store, MapPin, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { HONDURAS_DEPARTAMENTOS } from '@/lib/hondurasData';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 import PermissionGuard from '@/components/PermissionGuard';
+
+// ─── Change Password Modal ────────────────────────────────────────────────────
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+    const { addToast } = useToast();
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = () => {
+        if (!currentPassword) return addToast('Ingresa tu contraseña actual.', 'warning');
+        if (newPassword.length < 6) return addToast('La nueva contraseña debe tener al menos 6 caracteres.', 'warning');
+        if (newPassword !== confirmPassword) return addToast('Las contraseñas no coinciden.', 'warning');
+
+        setIsSaving(true);
+        apiFetch('/auth/me/password', {
+            method: 'POST',
+            body: JSON.stringify({ currentPassword, newPassword })
+        }).then((res: any) => {
+            addToast(res.message || 'Contraseña actualizada.', 'success');
+            onClose();
+        }).catch((err: any) => {
+            addToast(err.message || 'Error actualizando contraseña.', 'error');
+        }).finally(() => setIsSaving(false));
+    };
+
+    const inputCls = 'w-full bg-black/5 dark:bg-white/5 border border-primary/20 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all';
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-primary/20 shadow-2xl w-full max-w-sm animate-in zoom-in-95 fade-in duration-200">
+                <div className="flex items-center justify-between p-6 border-b border-primary/10">
+                    <h2 className="text-xl font-bold flex items-center gap-2"><Key size={20} className="text-primary" /> Cambiar Contraseña</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors"><X size={20} /></button>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="text-xs font-semibold opacity-60 mb-1 block">Contraseña actual</label>
+                        <input className={inputCls} type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold opacity-60 mb-1 block">Nueva contraseña</label>
+                        <input className={inputCls} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold opacity-60 mb-1 block">Confirmar nueva contraseña</label>
+                        <input className={inputCls} type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                    </div>
+                </div>
+                <div className="flex gap-3 p-6 border-t border-primary/10">
+                    <button onClick={onClose} disabled={isSaving} className="flex-1 py-2.5 rounded-xl border border-primary/20 text-sm font-medium hover:bg-primary/5 transition-colors disabled:opacity-50">Cancelar</button>
+                    <button onClick={handleSave} disabled={isSaving} className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:-translate-y-0.5 active:scale-95 transition-all flex justify-center gap-2 disabled:opacity-50">
+                        {isSaving ? 'Guardando...' : 'Cambiar'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
 function EditProfileModal({ onClose }: { onClose: () => void }) {
@@ -42,9 +102,10 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
         }
 
         setForm(next);
-        // Real-time update as user types
-        updateProfile(next as any);
+        // We removed real-time optimistic update typing here as we save on click
     };
+
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = () => {
         if (!form.firstName.trim() || !form.lastName.trim()) {
@@ -63,8 +124,24 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
             addToast('Debes indicar el nombre de tu negocio.', 'warning');
             return;
         }
-        addToast('Perfil actualizado correctamente.', 'success');
-        onClose();
+
+        setIsSaving(true);
+        const data = { ...form };
+        if (!data.isChurchMember) data.churchName = '';
+        if (!data.isEntrepreneur) data.businessName = '';
+
+        apiFetch('/auth/me', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }).then((updatedUser: any) => {
+            updateProfile(updatedUser);
+            addToast('Perfil actualizado correctamente.', 'success');
+            onClose();
+        }).catch((err: any) => {
+            addToast(err.message || 'Error actualizando tu perfil.', 'error');
+        }).finally(() => {
+            setIsSaving(false);
+        });
     };
 
     const inputCls = 'w-full bg-black/5 dark:bg-white/5 border border-primary/20 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all';
@@ -178,13 +255,14 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="flex gap-3 p-6 border-t border-primary/10">
-                    <button onClick={onClose}
-                        className="flex-1 py-2.5 rounded-xl border border-primary/20 text-sm font-medium hover:bg-primary/5 transition-colors">
+                    <button onClick={onClose} disabled={isSaving}
+                        className="flex-1 py-2.5 rounded-xl border border-primary/20 text-sm font-medium hover:bg-primary/5 transition-colors disabled:opacity-50">
                         Cancelar
                     </button>
-                    <button onClick={handleSave}
-                        className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2">
-                        <Save size={16} /> Guardar cambios
+                    <button onClick={handleSave} disabled={isSaving}
+                        className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0">
+                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+                        {isSaving ? 'Guardando...' : 'Guardar cambios'}
                     </button>
                 </div>
             </div>
@@ -198,6 +276,7 @@ function ProfilePageContent() {
     const { addToast } = useToast();
     const router = useRouter();
     const [editOpen, setEditOpen] = useState(false);
+    const [pwdOpen, setPwdOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -222,6 +301,7 @@ function ProfilePageContent() {
     return (
         <>
             {editOpen && <EditProfileModal onClose={() => setEditOpen(false)} />}
+            {pwdOpen && <ChangePasswordModal onClose={() => setPwdOpen(false)} />}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="mb-8">
                     <h1 className="text-4xl font-extrabold tracking-tight mb-2">Mi Perfil</h1>
@@ -310,9 +390,9 @@ function ProfilePageContent() {
                             </h3>
                             <div className="space-y-3">
                                 {[
-                                    { title: 'Contraseña', desc: 'Última actualización hace 2 meses', icon: Key, action: 'Cambiar' },
-                                    { title: 'Autenticación en 2 Pasos', desc: 'No configurada — recomendada', icon: Shield, action: 'Activar' },
-                                    { title: 'Dispositivos Activos', desc: '1 sesión activa actualmente', icon: Bell, action: 'Ver' },
+                                    { title: 'Contraseña', desc: 'Gestiona tu clave de acceso', icon: Key, action: 'Cambiar', onClick: () => setPwdOpen(true) },
+                                    { title: 'Autenticación en 2 Pasos', desc: 'No configurada — recomendada', icon: Shield, action: 'Activar', onClick: () => {} },
+                                    { title: 'Dispositivos Activos', desc: '1 sesión activa actualmente', icon: Bell, action: 'Ver', onClick: () => {} },
                                 ].map((item, i) => {
                                     const Icon = item.icon;
                                     return (
@@ -326,7 +406,7 @@ function ProfilePageContent() {
                                                     <p className="text-xs opacity-60">{item.desc}</p>
                                                 </div>
                                             </div>
-                                            <button className="px-3 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-xs font-medium transition-colors">
+                                            <button onClick={item.onClick} className="px-3 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-xs font-medium transition-colors">
                                                 {item.action}
                                             </button>
                                         </div>

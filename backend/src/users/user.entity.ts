@@ -49,6 +49,26 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
+  // ─── Security & Mail Verification ──────────────────────────────────────────
+
+  @Column({ default: true }) // Existing users pass by default. New will be set to false.
+  isEmailVerified: boolean;
+
+  @Column({ length: 255, nullable: true, default: null })
+  verificationToken: string | null;
+
+  @Column({ length: 255, nullable: true, default: null })
+  resetPasswordToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  resetPasswordExpires: Date | null;
+
+  @Column({ default: 0 })
+  failedLoginAttempts: number;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  lockedUntil: Date | null;
+
   @ManyToMany(() => Role, (role) => role.users, { eager: true })
   @JoinTable({ name: 'user_roles' })
   roles: Role[];

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, ChevronRight, Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 
@@ -55,6 +56,24 @@ export default function LoginPage() {
         if (field === 'password') setErrors(prev => ({ ...prev, password: validatePassword(password) }));
     };
 
+    const [isResending, setIsResending] = useState(false);
+
+    const handleResend = async () => {
+        if (!email.trim() || isResending) return;
+        setIsResending(true);
+        try {
+            await apiFetch('/auth/resend-verification', {
+                method: 'POST',
+                body: JSON.stringify({ email: email.toLowerCase().trim() })
+            });
+            addToast('Enlace de verificación reenviado a tu correo.', 'success');
+        } catch (e: any) {
+            addToast(e.message || 'Error reenviando el enlace.', 'error');
+        } finally {
+            setIsResending(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const emailErr = validateEmail(email);
@@ -68,7 +87,19 @@ export default function LoginPage() {
             addToast('¡Bienvenido/a de vuelta!', 'success');
             router.push('/');
         } else {
-            addToast(result.error ?? 'Error al iniciar sesión.', 'error');
+            if (result.error === 'NOT_VERIFIED') {
+                addToast(
+                    <div className="flex flex-col gap-2">
+                        <span>Debes verificar tu correo antes de iniciar sesión.</span>
+                        <button onClick={handleResend} className="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-bold w-full backdrop-blur-sm border border-white/30 hover:bg-white/30 transition shadow-sm">
+                            {isResending ? 'Enviando...' : 'Reenviar enlace de verificación'}
+                        </button>
+                    </div> as any, 
+                    'warning'
+                );
+            } else {
+                addToast(result.error ?? 'Error al iniciar sesión.', 'error');
+            }
         }
     };
 
@@ -123,6 +154,12 @@ export default function LoginPage() {
                                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </Field>
+
+                        <div className="flex justify-end mt-1">
+                            <Link href="/forgot-password" className="text-sm font-semibold text-primary hover:text-purple-600 transition-colors">
+                                ¿Olvidaste tu contraseña?
+                            </Link>
+                        </div>
 
                         <button
                             type="submit"

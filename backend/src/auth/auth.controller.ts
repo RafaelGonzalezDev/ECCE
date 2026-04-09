@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus,
+  Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus, Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -42,5 +42,42 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getMe(@CurrentUser() user: User) {
     return this.authService.getMe(user.id);
+  }
+
+  @Post('me')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@CurrentUser() user: User, @Body() body: any) {
+    return this.authService.updateProfile(user.id, body);
+  }
+
+  @Post('me/password')
+  @UseGuards(JwtAuthGuard)
+  updatePassword(@CurrentUser() user: User, @Body() body: any) {
+    return this.authService.updatePassword(user.id, body);
+  }
+
+  // ─── Verification & Recovery ─────────────────────────────────────────────
+
+  @Get('verify-email')
+  verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  resendVerification(@Body('email') email: string) {
+    return this.authService.resendVerificationEmail(email);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Body() body: any) {
+    return this.authService.resetPassword(body.token, body.newPassword);
   }
 }

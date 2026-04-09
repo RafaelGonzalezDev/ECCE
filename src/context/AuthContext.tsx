@@ -50,7 +50,7 @@ interface AuthContextType {
   currentUser: UserProfile | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  register: (data: RegisterData) => Promise<{ ok: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{ ok: boolean; error?: string; message?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => void;
 }
@@ -103,13 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (data: RegisterData) => {
     setIsLoading(true);
     try {
-      const { accessToken, refreshToken, user } = await apiFetch<AuthResponse>('/auth/register', {
+      const res = await apiFetch<any>('/auth/register', {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      TokenStorage.setTokens(accessToken, refreshToken);
-      setCurrentUser(user);
-      return { ok: true };
+      // We do not setTokens here because they must check email to verify first
+      return { ok: true, message: res.message };
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Error al crear la cuenta.';
       return { ok: false, error: message };
