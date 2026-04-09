@@ -27,7 +27,7 @@ export class MailService {
         </div>
         <p style="color: #666; font-size: 14px; text-align: center;">O copia este enlace en tu navegador:<br><a href="${url}" style="color: #9333ea;">${url}</a></p>
         <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;" />
-        <p style="color: #999; font-size: 12px; text-align: center;">Si tú no solicitaste este registro, puedes ignorar este correo.</p>
+        <p style="color: #999; font-size: 12px; text-align: center;">Si tú no fuiste quien creó esta cuenta, por favor ignora este correo de forma segura.</p>
       </div>
     `;
 

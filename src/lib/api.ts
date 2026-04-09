@@ -67,8 +67,10 @@ export async function apiFetch<T = unknown>(
 
   let response = await makeRequest(TokenStorage.getAccess());
 
-  // If 401, try to refresh once
-  if (response.status === 401) {
+  const skipRefreshPaths = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/verify-email', '/auth/forgot-password', '/auth/reset-password'];
+
+  // If 401, try to refresh once (but skip for public auth routes where 401 means invalid credentials)
+  if (response.status === 401 && !skipRefreshPaths.includes(path)) {
     if (!isRefreshing) {
       isRefreshing = true;
       refreshPromise = doRefresh().finally(() => {

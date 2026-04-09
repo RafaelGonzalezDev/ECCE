@@ -172,7 +172,7 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     
     if (!valid) {
-      user.failedLoginAttempts += 1;
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       
       // 5 failed attempts = 15 minutes lockout
       if (user.failedLoginAttempts >= 5) {
@@ -181,11 +181,11 @@ export class AuthService {
       
       await this.usersRepo.save(user);
       
-      if (user.lockedUntil) {
-        throw new UnauthorizedException('Has alcanzado el límite de intentos. Cuenta bloqueada por 15 minutos.');
+      if (user.lockedUntil && user.lockedUntil > new Date()) {
+        throw new UnauthorizedException('Has alcanzado el límite de intentos (5). Tu cuenta ha sido bloqueada por 15 minutos por seguridad.');
       }
       
-      throw new UnauthorizedException('Correo electrónico o contraseña incorrectos.');
+      throw new UnauthorizedException(`Correo electrónico o contraseña incorrectos. Intento fallido ${user.failedLoginAttempts}/5.`);
     }
 
     // Login successful

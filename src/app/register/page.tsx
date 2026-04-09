@@ -215,7 +215,7 @@ export default function RegisterPage() {
 
         const result = await register(data);
         if (result.ok) {
-            addToast(result.message || `¡Bienvenido/a, ${data.firstName}! Tu cuenta fue creada exitosamente. Te hemos enviado un correo de validación.`, 'success');
+            addToast(result.message || `¡Tu cuenta fue creada! Debes verificar tu correo desde el enlace que te enviamos para poder iniciar sesión.`, 'success');
             router.push('/login');
         } else {
             addToast(result.error ?? 'Error desconocido.', 'error');

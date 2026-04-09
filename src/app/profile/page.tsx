@@ -16,6 +16,7 @@ import PermissionGuard from '@/components/PermissionGuard';
 // ─── Change Password Modal ────────────────────────────────────────────────────
 function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     const { addToast } = useToast();
+    const { logout } = useAuth();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,8 +32,9 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
             method: 'POST',
             body: JSON.stringify({ currentPassword, newPassword })
         }).then((res: any) => {
-            addToast(res.message || 'Contraseña actualizada.', 'success');
+            addToast(res.message || 'Contraseña actualizada. Por favor inicia sesión nuevamente.', 'success');
             onClose();
+            logout(); // Log out active sessions!
         }).catch((err: any) => {
             addToast(err.message || 'Error actualizando contraseña.', 'error');
         }).finally(() => setIsSaving(false));
