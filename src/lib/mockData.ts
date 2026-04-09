@@ -8,55 +8,55 @@ export const MOCK_USERS = [
 
 export const MOCK_PRODUCTS: Product[] = [
     {
-        id: 'p1',
+        id: 1,
         title: 'Diseño de Logotipo Profesional e Identidad de Marca',
-        price: '$150.00',
-        category: 'Diseño',
-        image: '📐 Logo Design',
-        seller: { id: 'u1', name: 'Ana García' }
+        price: '150.00',
+        category: { id: 1, name: 'Diseño' },
+        images: [{ url: '📐', publicId: '1' }],
+        seller: { id: 1, name: 'Ana García' }
     },
     {
-        id: 'p2',
+        id: 2,
         title: 'Desarrollo de Landing Page Receptiva con React',
-        price: '$300.00',
-        category: 'Desarrollo Web',
-        image: '💻 Landing Page',
-        seller: { id: 'u2', name: 'Carlos Mendoza' }
+        price: '300.00',
+        category: { id: 2, name: 'Desarrollo Web' },
+        images: [{ url: '💻', publicId: '2' }],
+        seller: { id: 2, name: 'Carlos Mendoza' }
     },
     {
-        id: 'p3',
+        id: 3,
         title: 'Mantenimiento y Reparación de Equipos de Cómputo',
-        price: '$50.00',
-        category: 'Soporte',
-        image: '🔧 PC Repair',
-        seller: { id: 'u2', name: 'Carlos Mendoza' }
+        price: '50.00',
+        category: { id: 3, name: 'Soporte' },
+        images: [{ url: '🔧', publicId: '3' }],
+        seller: { id: 2, name: 'Carlos Mendoza' }
     },
     {
-        id: 'p4',
+        id: 4,
         title: 'Caja de 12 Macarons Franceses Artesanales',
-        price: '$25.00',
-        category: 'Repostería',
-        image: '🧁 Macarons',
-        seller: { id: 'u3', name: 'Elena Rojas' }
+        price: '25.00',
+        category: { id: 4, name: 'Repostería' },
+        images: [{ url: '🧁', publicId: '4' }],
+        seller: { id: 3, name: 'Elena Rojas' }
     },
     {
-        id: 'p5',
+        id: 5,
         title: 'Pastel de Cumpleaños Personalizado (Fondant)',
-        price: '$60.00',
-        category: 'Repostería',
-        image: '🎂 Custom Cake',
-        seller: { id: 'u3', name: 'Elena Rojas' }
+        price: '60.00',
+        category: { id: 4, name: 'Repostería' },
+        images: [{ url: '🎂', publicId: '5' }],
+        seller: { id: 3, name: 'Elena Rojas' }
     },
     {
-        id: 'p6',
+        id: 6,
         title: 'Sesión de Fotografía Comercial para Productos',
-        price: '$120.00',
-        category: 'Fotografía',
-        image: '📸 Photo Session',
-        seller: { id: 'u1', name: 'Ana García' }
+        price: '120.00',
+        category: { id: 5, name: 'Fotografía' },
+        images: [{ url: '📸', publicId: '6' }],
+        seller: { id: 1, name: 'Ana García' }
     }
 ];
 
-export const getProductsByUser = (userId: string) => MOCK_PRODUCTS.filter(p => p.seller.id === userId);
-export const getProductById = (productId: string) => MOCK_PRODUCTS.find(p => p.id === productId);
+export const getProductsByUser = (userId: number) => MOCK_PRODUCTS.filter(p => p.seller.id === userId);
+export const getProductById = (productId: number) => MOCK_PRODUCTS.find(p => p.id === productId);
 export const getUserById = (userId: string) => MOCK_USERS.find(u => u.id === userId);

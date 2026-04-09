@@ -5,8 +5,9 @@ import ProductCard from '@/components/ProductCard';
 import { Search, Filter } from 'lucide-react';
 import { useProducts } from '@/context/ProductContext';
 import { apiFetch } from '@/lib/api';
+import PermissionGuard from '@/components/PermissionGuard';
 
-export default function MarketplacePage() {
+function MarketplacePageContent() {
     const { products, loading } = useProducts();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('Todos');
@@ -103,5 +104,13 @@ export default function MarketplacePage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function MarketplacePage() {
+    return (
+        <PermissionGuard require="marketplace:read" moduleName="Marketplace">
+            <MarketplacePageContent />
+        </PermissionGuard>
     );
 }

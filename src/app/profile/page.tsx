@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { HONDURAS_DEPARTAMENTOS } from '@/lib/hondurasData';
 import Link from 'next/link';
+import PermissionGuard from '@/components/PermissionGuard';
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
 function EditProfileModal({ onClose }: { onClose: () => void }) {
@@ -192,7 +193,7 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Profile Page ──────────────────────────────────────────────────────────────
-export default function ProfilePage() {
+function ProfilePageContent() {
     const { currentUser, logout } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
@@ -370,5 +371,13 @@ export default function ProfilePage() {
                 </div>
             </div>
         </>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <PermissionGuard require="profile:read" moduleName="Perfil">
+            <ProfilePageContent />
+        </PermissionGuard>
     );
 }

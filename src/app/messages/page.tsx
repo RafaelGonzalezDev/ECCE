@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Send, User, Search, Store, MoreVertical, MessageSquare, ChevronLeft, Smile } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
+import PermissionGuard from '@/components/PermissionGuard';
 
 function MessagesContent() {
     const { conversations, sendMessage, openChat, markAsRead, closeChat } = useChat();
@@ -261,8 +262,10 @@ function MessagesContent() {
 
 export default function MessagesPage() {
     return (
-        <Suspense fallback={<div className="flex items-center justify-center h-full">Cargando chats...</div>}>
-            <MessagesContent />
-        </Suspense>
+        <PermissionGuard require="messages:read" moduleName="Mensajes">
+            <Suspense fallback={<div className="flex items-center justify-center h-[calc(100vh-4rem)]">Cargando chats...</div>}>
+                <MessagesContent />
+            </Suspense>
+        </PermissionGuard>
     );
 }

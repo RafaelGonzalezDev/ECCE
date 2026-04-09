@@ -76,6 +76,10 @@ export class SeedService implements OnApplicationBootstrap {
     // Settings module
     { name: 'settings:read',  module: 'settings', action: 'read',  description: 'Ver configuración' },
     { name: 'settings:write', module: 'settings', action: 'write', description: 'Cambiar configuración' },
+    // Admin module (exclusive to admin role)
+    { name: 'admin:access', module: 'admin', action: 'access', description: 'Acceso al panel de administración' },
+    { name: 'admin:users',  module: 'admin', action: 'users',  description: 'Gestionar usuarios desde el panel' },
+    { name: 'admin:roles',  module: 'admin', action: 'roles',  description: 'Gestionar roles y permisos' },
   ];
 
   private async seedPermissions() {

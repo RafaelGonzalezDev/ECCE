@@ -1,11 +1,12 @@
 import ColorPicker from '@/components/ColorPicker';
+import PermissionGuard from '@/components/PermissionGuard';
 
 export const metadata = {
     title: 'Ajustes de Tema - Personalizador',
     description: 'Personaliza la apariencia de tu aplicación',
 };
 
-export default function SettingsPage() {
+function SettingsPageContent() {
     return (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="mb-8">
@@ -50,5 +51,13 @@ export default function SettingsPage() {
                 </section>
             </div>
         </div>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <PermissionGuard require="settings:read" moduleName="Ajustes">
+            <SettingsPageContent />
+        </PermissionGuard>
     );
 }

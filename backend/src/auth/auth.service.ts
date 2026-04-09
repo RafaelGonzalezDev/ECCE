@@ -140,10 +140,14 @@ export class AuthService {
   // ─── Login ────────────────────────────────────────────────────────────────
 
   async login(dto: LoginDto) {
-    const user = await this.usersRepo.findOne({
-      where: { email: dto.email.toLowerCase() },
-      relations: ['roles', 'roles.permissions'],
-    });
+    // Must use QueryBuilder to explicitly load passwordHash (column has select:false)
+    const user = await this.usersRepo
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('role.permissions', 'permission')
+      .where('user.email = :email', { email: dto.email.toLowerCase() })
+      .getOne();
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Correo electrónico o contraseña incorrectos.');

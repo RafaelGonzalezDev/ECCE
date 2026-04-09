@@ -7,8 +7,9 @@ import { useProducts } from '@/context/ProductContext';
 import { useAuth } from '@/context/AuthContext';
 import { Product } from '@/components/ProductCard';
 import { apiFetch } from '@/lib/api';
+import PermissionGuard from '@/components/PermissionGuard';
 
-export default function MyStorePage() {
+function MyStorePageContent() {
     const { currentUser: user, isLoading: authLoading, updateProfile } = useAuth();
     const { products, addProduct, editProduct, deleteProduct, loading: productsLoading } = useProducts();
     const myProducts = products.filter(p => p.seller?.id === user?.id);
@@ -445,5 +446,13 @@ export default function MyStorePage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function MyStorePage() {
+    return (
+        <PermissionGuard require="store:read" moduleName="Mi Tienda">
+            <MyStorePageContent />
+        </PermissionGuard>
     );
 }

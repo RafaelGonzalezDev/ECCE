@@ -5,12 +5,25 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
     Home, User, Settings, Menu, X, ChevronLeft, ChevronRight,
-    Store, ShoppingBag, MessageSquare, LogIn, LogOut, Lock
+    Store, ShoppingBag, MessageSquare, LogIn, LogOut, ShieldCheck, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 
 const AUTH_PAGES = ['/login', '/register'];
+
+/**
+ * Maps a nav item to which permission grants read access.
+ * null = always visible (no permission required).
+ */
+const NAV_ITEMS = [
+    { name: 'Inicio',      href: '/',           icon: Home,          readPerm: null,              protected: false },
+    { name: 'Marketplace', href: '/marketplace', icon: Store,         readPerm: 'marketplace:read', protected: false },
+    { name: 'Mi Tienda',   href: '/store',       icon: ShoppingBag,   readPerm: 'store:read',       protected: true },
+    { name: 'Mensajes',    href: '/messages',    icon: MessageSquare, readPerm: 'messages:read',    protected: true },
+    { name: 'Perfil',      href: '/profile',     icon: User,          readPerm: 'profile:read',     protected: true },
+    { name: 'Ajustes',     href: '/settings',    icon: Settings,      readPerm: 'settings:read',    protected: true },
+];
 
 export default function Sidebar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -23,15 +36,18 @@ export default function Sidebar() {
     // Don't render sidebar on auth pages OR landing page when not logged in
     if (AUTH_PAGES.some(p => pathname?.startsWith(p))) return null;
     if (pathname === '/' && !currentUser) return null;
+    // Admin module has its own dedicated layout with its own sidebar
+    if (pathname?.startsWith('/admin')) return null;
 
-    const menuItems = [
-        { name: 'Inicio', href: '/', icon: Home, protected: false },
-        { name: 'Marketplace', href: '/marketplace', icon: Store, protected: false },
-        { name: 'Mi Tienda', href: '/store', icon: ShoppingBag, protected: true },
-        { name: 'Mensajes', href: '/messages', icon: MessageSquare, protected: true },
-        { name: 'Perfil', href: '/profile', icon: User, protected: true },
-        { name: 'Ajustes', href: '/settings', icon: Settings, protected: true },
-    ];
+    const userPermissions = currentUser?.permissions ?? [];
+    const isAdmin = currentUser?.roles?.includes('admin') ?? false;
+
+    /** True if the user has the given permission key, or is admin (always full access) */
+    const hasPerm = (perm: string | null) => {
+        if (!perm) return true;          // no restriction
+        if (isAdmin) return true;         // admin always has access
+        return userPermissions.includes(perm);
+    };
 
     const handleLogout = () => {
         logout();
@@ -74,10 +90,11 @@ export default function Sidebar() {
 
                 {/* Nav */}
                 <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
-                    {menuItems.map(item => {
+                    {NAV_ITEMS.map(item => {
                         const Icon = item.icon;
                         const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                         const isLocked = item.protected && !currentUser;
+                        const noAccess = item.protected && currentUser && !hasPerm(item.readPerm);
 
                         if (isLocked) {
                             return (
@@ -93,10 +110,32 @@ export default function Sidebar() {
                                     {!isCollapsed && (
                                         <span className="flex items-center gap-1.5 font-medium">
                                             {item.name}
-                                            <Lock size={12} className="opacity-70" />
+                                            <AlertCircle size={12} className="opacity-70" />
                                         </span>
                                     )}
                                 </Link>
+                            );
+                        }
+
+                        // User is logged in but lacks the read permission for this module
+                        if (noAccess) {
+                            return (
+                                <button
+                                    key={item.href}
+                                    type="button"
+                                    title={`No tienes permiso para acceder a ${item.name}`}
+                                    onClick={() => addToast(`No tienes acceso a "${item.name}". Contacta al administrador si crees que esto es un error.`, 'warning')}
+                                    className={`w-full flex items-center p-3 rounded-xl opacity-30 cursor-not-allowed transition-all hover:opacity-50
+                                        ${isCollapsed ? 'justify-center' : 'space-x-3'} text-neutral-500`}
+                                >
+                                    <Icon size={20} />
+                                    {!isCollapsed && (
+                                        <span className="flex items-center gap-1.5 font-medium">
+                                            {item.name}
+                                            <AlertCircle size={12} className="opacity-70" />
+                                        </span>
+                                    )}
+                                </button>
                             );
                         }
 
@@ -115,6 +154,21 @@ export default function Sidebar() {
                             </Link>
                         );
                     })}
+
+                    {/* Admin link — only for users with admin role */}
+                    {isAdmin && (
+                        <Link
+                            href="/admin"
+                            onClick={() => setIsOpen(false)}
+                            className={`flex items-center p-3 rounded-xl transition-all duration-200
+                                ${pathname.startsWith('/admin') ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'hover:bg-primary/10 text-neutral-600 dark:text-neutral-300 hover:text-primary'}
+                                ${isCollapsed ? 'justify-center' : 'space-x-3'}`}
+                            title={isCollapsed ? 'Admin' : undefined}
+                        >
+                            <ShieldCheck size={20} className={pathname.startsWith('/admin') ? 'text-white' : 'text-current'} />
+                            {!isCollapsed && <span className="font-medium">Admin</span>}
+                        </Link>
+                    )}
                 </nav>
 
                 {/* User section */}

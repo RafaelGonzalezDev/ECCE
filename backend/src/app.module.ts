@@ -9,6 +9,7 @@ import { SeedModule } from './database/seed/seed.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     CategoriesModule,
     ProductsModule,
     CloudinaryModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
