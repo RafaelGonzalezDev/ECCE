@@ -6,7 +6,16 @@ import { useChat } from '@/context/ChatContext';
 import { useAuth } from '@/context/AuthContext';
 import { X, Minus, Send, Smile, User, CheckCheck } from 'lucide-react';
 
-const QUICK_EMOJIS = ['😀','😂','🥰','😍','🔥','👍','❤️','🎉','😎','🙏','💪','✨','😅','🤔','💯','🚀'];
+const EMOJI_CATS: Record<string, string[]> = {
+  '😀': ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','😔','😪','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','😵','🤯','😎','🥸','🤓','😕','😟','🙁','☹️','😮','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💩','🤡','👻'],
+  '👋': ['👋','🤚','🖐','✋','🖖','👌','🤌','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','🤲','🙏','💪','🫶','🤝','🫱','🫲'],
+  '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','💯','🔥','✨','💫','⭐','🌟','🎉','🎊','🎈','🎁','🌈','☀️','🌙','❄️','⚡','🌊','🌸','🌺','🌻','🍀','🌹'],
+  '😸': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🐺','🐗','🦋','🐛','🐢','🐍','🦎','🐬','🐳','🐋','🦈'],
+  '🍕': ['🍕','🍔','🌮','🌯','🍜','🍝','🍣','🍱','🍛','🍲','🍗','🥩','🥚','🧀','🥗','🥙','🥪','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🍫','🍬','🍭','🍺','🍻','🥂','🍷','☕','🫖','🍵','🧃','🥤','🧋'],
+  '⚽': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🎱','🏓','🏸','🥊','🥋','🎯','🎮','🎲','🎭','🎨','🎬','🎤','🎧','🎵','🎶','🎸','🎹','🏆','🥇','🎖','🎗','🚀'],
+  '🌍': ['🌍','🌎','🌏','🗺','🧭','🏔','⛰','🌋','🏕','🏖','🏜','🏝','🌅','🌄','🌠','🎇','🎆','🌇','🌆','🏙','🌃','🌌','🌉','🏠','🏡','🏢','🏥','🏦','🏨','🏩','🏪','🏫','🏬'],
+  '✅': ['✅','❌','⭕','⚠️','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','💯','🆗','🆕','🆙','🆒','🆓','🔝','❓','❔','❕','❗','🔔','🔕','📢','📣','💬','💭','🗯','♻️','🚩','🏁','🔺','🔻','🔷','🔶','🔹','🔸','▶️'],
+};
 
 function formatTime(iso: string) {
   if (!iso) return '';
@@ -24,6 +33,7 @@ export default function FloatingChat() {
 
   const [newMessage, setNewMessage] = useState('');
   const [showEmojis, setShowEmojis] = useState(false);
+  const [activeEmojiCat, setActiveEmojiCat] = useState(Object.keys(EMOJI_CATS)[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -153,13 +163,25 @@ export default function FloatingChat() {
 
       {/* Emoji picker */}
       {showEmojis && (
-        <div className="absolute bottom-16 left-3 bg-white dark:bg-neutral-800 border border-primary/20 p-2 rounded-2xl shadow-xl grid grid-cols-8 gap-0.5 animate-in zoom-in-95 duration-150">
-          {QUICK_EMOJIS.map(emoji => (
-            <button key={emoji} onClick={() => setNewMessage(p => p + emoji)}
-              className="w-8 h-8 flex items-center justify-center hover:bg-primary/10 rounded-xl transition-colors text-lg">
-              {emoji}
-            </button>
-          ))}
+        <div className="absolute bottom-16 left-3 bg-white dark:bg-neutral-800 border border-primary/20 p-2 rounded-2xl shadow-xl animate-in zoom-in-95 duration-150 z-50">
+           {/* Category tabs */}
+           <div className="flex gap-0.5 p-1 border-b border-primary/10 overflow-x-auto scrollbar-hide max-w-[280px]">
+             {Object.keys(EMOJI_CATS).map(cat => (
+               <button key={cat} onClick={() => setActiveEmojiCat(cat)}
+                 className={`text-lg p-1 rounded-lg transition-colors flex-shrink-0 ${activeEmojiCat === cat ? 'bg-primary/20' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}>
+                 {cat}
+               </button>
+             ))}
+           </div>
+           {/* Emoji grid */}
+           <div className="grid grid-cols-8 gap-0 p-1 mt-1 max-h-36 overflow-y-auto max-w-[280px]">
+             {EMOJI_CATS[activeEmojiCat].map(emoji => (
+               <button key={emoji} onClick={() => setNewMessage(p => p + emoji)}
+                 className="text-xl p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors">
+                 {emoji}
+               </button>
+             ))}
+           </div>
         </div>
       )}
 

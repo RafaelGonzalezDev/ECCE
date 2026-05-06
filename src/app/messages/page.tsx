@@ -62,7 +62,7 @@ function MessagesContent() {
   const {
     conversations, sendMessage, openChat, markAsRead, closeChat,
     typingConvIds, onlineUserIds, emitTypingStart, emitTypingStop, loadMoreMessages,
-    connectionStatus,
+    loadConversation, connectionStatus,
   } = useChat();
 
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
@@ -113,6 +113,11 @@ function MessagesContent() {
     markAsRead(convId);
     setIsMobileViewList(false);
     setShowEmojis(false);
+    // Load messages from DB if not already in memory
+    const conv = conversations.find(c => c.id === convId);
+    if (!conv || conv.messages.length === 0) {
+      loadConversation(convId);
+    }
   };
 
   // Load more on scroll top

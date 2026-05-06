@@ -49,6 +49,7 @@ interface ChatContextType {
   sendMessage: (conversationId: number, content: string) => void;
   markAsRead: (conversationId: number) => void;
   loadMoreMessages: (conversationId: number, beforeId: number) => void;
+  loadConversation: (conversationId: number) => void;
   emitTypingStart: (conversationId: number) => void;
   emitTypingStop: (conversationId: number) => void;
 }
@@ -169,6 +170,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }));
     });
 
+    // ── Load messages for a conversation by ID (used by messages page) ───
+    socket.on('conversation_messages', ({ conversationId, messages }: { conversationId: number; messages: ChatMessage[] }) => {
+      setConversations(prev => prev.map(c =>
+        c.id === conversationId ? { ...c, messages } : c,
+      ));
+    });
+
     // ── Paginated history ──────────────────────────────────────────────
     socket.on('more_messages', ({ conversationId, messages }: { conversationId: number; messages: ChatMessage[] }) => {
       setConversations(prev => prev.map(c => {
@@ -248,6 +256,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     socketRef.current?.emit('mark_read', { conversationId });
   }, []);
 
+  const loadConversation = useCallback((conversationId: number) => {
+    socketRef.current?.emit('load_conversation', { conversationId });
+  }, []);
+
   const loadMoreMessages = useCallback((conversationId: number, beforeId: number) => {
     socketRef.current?.emit('load_more_messages', { conversationId, beforeId });
   }, []);
@@ -274,6 +286,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       sendMessage,
       markAsRead,
       loadMoreMessages,
+      loadConversation,
       emitTypingStart,
       emitTypingStop,
     }}>

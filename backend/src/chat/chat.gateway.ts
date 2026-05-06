@@ -138,6 +138,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('more_messages', { conversationId: data.conversationId, messages });
   }
 
+  // ─── Load messages for an existing conversation by ID ─────────────────────
+
+  @SubscribeMessage('load_conversation')
+  async handleLoadConversation(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: number },
+  ) {
+    // Make sure the socket is in the room
+    client.join(`conv_${data.conversationId}`);
+    const messages = await this.chatService.getMessages(data.conversationId, 50);
+    client.emit('conversation_messages', {
+      conversationId: data.conversationId,
+      messages,
+    });
+  }
+
   // ─── Send message ─────────────────────────────────────────────────────────
 
   @SubscribeMessage('send_message')
