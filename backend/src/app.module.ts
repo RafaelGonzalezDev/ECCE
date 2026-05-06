@@ -11,6 +11,7 @@ import { ProductsModule } from './products/products.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { MailModule } from './mail/mail.module';
     CloudinaryModule,
     AdminModule,
     MailModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
